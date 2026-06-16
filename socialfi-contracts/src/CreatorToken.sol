@@ -93,7 +93,8 @@ contract CreatorToken is ERC1155 {
     }
 
     function _calcPrice(uint256 supply) internal view returns (uint256) {
-        uint256 curve = (kScaled * supply * supply) / 1e9;
+        // kScaled is k * 1e9. To get micro-USDC (1e6), we effectively divide by 1000.
+        uint256 curve = (kScaled * supply * supply) / 1000;
         return ((curve + basePrice) * aiModifierBps) / 10000;
     }
 
@@ -131,13 +132,13 @@ contract CreatorToken is ERC1155 {
         (uint256 upper, uint256 lower) = getCircuitBreakerBounds();
         require(newPrice <= upper && newPrice >= lower, "CircuitBreaker: bounds exceeded");
 
-        IERC20(usdcAddress).transferFrom(msg.sender, address(this), totalCost);
+        require(IERC20(usdcAddress).transferFrom(msg.sender, address(this), totalCost), "USDC transferFrom failed");
         
         uint256 creatorShare = (sumPrice * CREATOR_FEE_BPS) / 10000;
         uint256 protocolShare = (sumPrice * PROTOCOL_FEE_BPS) / 10000;
         
         creatorFeeBalance += creatorShare;
-        IERC20(usdcAddress).transfer(treasuryAddress, protocolShare);
+        require(IERC20(usdcAddress).transfer(treasuryAddress, protocolShare), "USDC transfer failed");
         
         currentSupply += amount;
         _mint(msg.sender, TOKEN_ID, amount, "");
@@ -169,8 +170,8 @@ contract CreatorToken is ERC1155 {
         
         creatorFeeBalance += creatorShare;
         
-        IERC20(usdcAddress).transfer(treasuryAddress, protocolShare);
-        IERC20(usdcAddress).transfer(msg.sender, totalReturn);
+        require(IERC20(usdcAddress).transfer(treasuryAddress, protocolShare), "USDC transfer to treasury failed");
+        require(IERC20(usdcAddress).transfer(msg.sender, totalReturn), "USDC transfer to seller failed");
 
         uint256 pricePerToken = amount > 0 ? sumPrice / amount : 0;
         emit PassSold(msg.sender, amount, pricePerToken, totalReturn, currentSupply, block.timestamp);
@@ -206,7 +207,7 @@ contract CreatorToken is ERC1155 {
         uint256 amount = creatorFeeBalance;
         require(amount > 0, "No balance to withdraw");
         creatorFeeBalance = 0;
-        IERC20(usdcAddress).transfer(creatorWallet, amount);
+        require(IERC20(usdcAddress).transfer(creatorWallet, amount), "USDC transfer failed");
         emit CreatorWithdraw(msg.sender, amount);
     }
 
