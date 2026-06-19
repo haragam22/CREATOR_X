@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "676608963783",
+    "project_id": "socialfi-creator-passes",
+    "storage_bucket": ""
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676608963783:android:0000000000000000",
+        "android_client_info": {
+          "package_name": "com.example.socialfi_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "676608963783-brsm6l0r40akco0ld14v1clnkd9fed17.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.socialfi_app",
+            "certificate_hash": "a0bcd0b1e4ecd552cec4aca77eef2e564b4fee06"
+          }
+        },
+        {
+          "client_id": "676608963783-lj65rofce0ddiov658m38gfh92meosfl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9S7BD0IONWLz8cbD3AVTJj4qRCvH0e8s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "676608963783-lj65rofce0ddiov658m38gfh92meosfl.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
