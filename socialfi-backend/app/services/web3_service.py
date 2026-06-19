@@ -99,9 +99,17 @@ class Web3Service:
     def get_sell_quote(contract_address: str, amount: int) -> dict:
         contract = Web3Service.get_creator_contract(contract_address)
         try:
+            # Prevent Solidity Arithmetic Underflow (Panic 0x11) if supply is 0
+            current_supply = contract.functions.currentSupply().call()
+            if current_supply < amount:
+                raise ValueError("Insufficient total supply to sell.")
+                
             # getSellQuote(amount) returns (totalReturn, fee) as a tuple
             total_return, fee = contract.functions.getSellQuote(amount).call()
             return {"total_return": total_return, "fee": fee, "net": total_return - fee}
+        except ValueError as ve:
+            logger.error(f"Cannot get sell quote: {ve}")
+            raise HTTPException(status_code=400, detail=str(ve))
         except Exception as e:
             logger.error(f"Failed to get sell quote: {e}")
-            raise HTTPException(status_code=400, detail="Failed to calculate sell quote.")
+            raise HTTPException(status_code=400, detail="Failed to calculate sell quote. Ensure the contract has enough supply.")
