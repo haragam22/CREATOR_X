@@ -35,10 +35,9 @@ class PriceEvent(Base):
 class Candle5m(Base):
     __tablename__ = "candles_5m"
     __table_args__ = (
-        UniqueConstraint('creator_id', 'open_time', name='uix_creator_opentime'),
-        Index('idx_candles_creator_time', 'creator_id', 'open_time'),
+        Index('idx_candles_creator_time', 'creator_id', 'open_time', unique=True),
     )
-    id = Column(BigInteger, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     creator_id = Column(Integer, ForeignKey("creators.id"))
     open_time = Column(DateTime(timezone=True), nullable=False)
     close_time = Column(DateTime(timezone=True), nullable=False)
@@ -46,7 +45,22 @@ class Candle5m(Base):
     high_price = Column(Numeric(18, 6), nullable=False)
     low_price = Column(Numeric(18, 6), nullable=False)
     close_price = Column(Numeric(18, 6), nullable=False)
-    volume_tokens = Column(BigInteger, nullable=False)
+    volume_tokens = Column(BigInteger, default=0)
+
+class MockPortfolio(Base):
+    """
+    Used exclusively for frontend testing/mocking when MetaMask is not available.
+    Stores off-chain pass balances.
+    """
+    __tablename__ = "mock_portfolio"
+    __table_args__ = (
+        UniqueConstraint('wallet_address', 'creator_id', name='uix_mock_portfolio_wallet_creator'),
+        Index('idx_mock_portfolio_wallet', 'wallet_address'),
+    )
+    id = Column(Integer, primary_key=True, index=True)
+    wallet_address = Column(String(42), nullable=False)
+    creator_id = Column(Integer, ForeignKey("creators.id"), nullable=False)
+    balance = Column(Integer, nullable=False, default=0)
 
 class SentimentHistory(Base):
     __tablename__ = "sentiment_history"
