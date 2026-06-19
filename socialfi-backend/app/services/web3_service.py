@@ -88,9 +88,9 @@ class Web3Service:
     def get_buy_quote(contract_address: str, amount: int) -> dict:
         contract = Web3Service.get_creator_contract(contract_address)
         try:
-            price = contract.functions.getBuyPrice(amount).call()
-            fee = contract.functions.getBuyFee(amount).call()
-            return {"price": price, "fee": fee, "total": price + fee}
+            # getBuyQuote(amount) returns (totalCost, fee) as a tuple
+            total_cost, fee = contract.functions.getBuyQuote(amount).call()
+            return {"total_cost": total_cost, "fee": fee, "price_without_fee": total_cost - fee}
         except Exception as e:
             logger.error(f"Failed to get buy quote: {e}")
             raise HTTPException(status_code=400, detail="Failed to calculate buy quote.")
@@ -99,9 +99,9 @@ class Web3Service:
     def get_sell_quote(contract_address: str, amount: int) -> dict:
         contract = Web3Service.get_creator_contract(contract_address)
         try:
-            price = contract.functions.getSellPrice(amount).call()
-            fee = contract.functions.getSellFee(amount).call()
-            return {"price": price, "fee": fee, "net": price - fee}
+            # getSellQuote(amount) returns (totalReturn, fee) as a tuple
+            total_return, fee = contract.functions.getSellQuote(amount).call()
+            return {"total_return": total_return, "fee": fee, "net": total_return - fee}
         except Exception as e:
             logger.error(f"Failed to get sell quote: {e}")
             raise HTTPException(status_code=400, detail="Failed to calculate sell quote.")

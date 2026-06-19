@@ -6,6 +6,7 @@ from sqlalchemy.future import select
 from app.db.session import get_db
 from app.db.models import Creator
 from app.services.web3_service import Web3Service
+from app.config import w3
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
@@ -23,8 +24,8 @@ async def get_portfolio(wallet: str, db: AsyncSession = Depends(get_db)):
     for c in creators:
         try:
             contract = Web3Service.get_creator_contract(c.token_contract)
-            # Token ID is 0 for the main pass
-            balance = contract.functions.balanceOf(wallet, 0).call()
+            # TOKEN_ID is 1 per the Solidity contract constant (ERC-1155 single tier)
+            balance = contract.functions.balanceOf(w3.to_checksum_address(wallet), 1).call()
             
             if balance > 0:
                 current_price = contract.functions.getCurrentPrice().call()

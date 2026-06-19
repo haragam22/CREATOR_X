@@ -549,7 +549,7 @@ with tab_sentiment:
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Subscribers", f"{channel.get('subscribers', 0):,}")
             c2.metric("Tier", channel.get("tier_name", "?"))
-            c3.metric("Base Price", f"${channel.get('base_price_usdc', 0)/1e6:.2f} USDC")
+            c3.metric("Base Price", f"${channel.get('base_price_usdc', 0):.2f} USDC")
             c4.metric("k Value", channel.get("k_value", 0))
 
             comments_data = resp.get("comments", {})
