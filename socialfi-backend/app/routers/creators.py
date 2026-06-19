@@ -85,6 +85,31 @@ async def get_creator_candles(creator_id: int, tf: str = "5m", db: AsyncSession 
     )
     candles = result.scalars().all()
     
+    if not candles:
+        # Fetch the creator to get token contract
+        from app.db.models import Creator
+        from app.services.web3_service import Web3Service
+        from datetime import datetime, timezone
+        
+        creator_result = await db.execute(select(Creator).where(Creator.id == creator_id))
+        creator = creator_result.scalars().first()
+        
+        if creator and creator.token_contract:
+            try:
+                contract = Web3Service.get_creator_contract(creator.token_contract)
+                current_price = contract.functions.getCurrentPrice().call()
+                now = datetime.now(timezone.utc)
+                return [{
+                    "time": int(now.timestamp()),
+                    "open": float(current_price),
+                    "high": float(current_price),
+                    "low": float(current_price),
+                    "close": float(current_price),
+                    "volume": 0
+                }]
+            except Exception as e:
+                pass # Fallback to empty list if contract call fails
+    
     return [
         {
             "time": int(c.open_time.timestamp()),
@@ -175,7 +200,7 @@ async def get_creator_detail(creator_id: int, db: AsyncSession = Depends(get_db)
             contract = Web3Service.get_creator_contract(creator.token_contract)
             current_price = contract.functions.getCurrentPrice().call()
             ai_modifier_bps = contract.functions.aiModifierBps().call()
-            current_supply = contract.functions.totalSupply().call()
+            current_supply = contract.functions.currentSupply().call()
             session_opening_price = contract.functions.sessionOpeningPrice().call()
             
             contract_data = {

@@ -51,28 +51,25 @@ async def aggregate_5m_candles():
                 close_price = trades[-1].price_usdc
                 high_price = max(t.price_usdc for t in trades)
                 low_price = min(t.price_usdc for t in trades)
-                volume = sum(t.supply for t in trades) # Wait, volume is total tokens traded? No, supply is cumulative. 
-                
-                # Volume logic: sum of amount for this period. 
-                # Our PriceEvent has `supply`. We didn't store `amount` traded! 
-                # Let's approximate volume by looking at the change in supply if we need to, but it's easier 
-                # to just count the number of trades or look at difference. Let's just use number of tokens traded.
-                # Actually, wait, PriceEvent schema doesn't have `amount`. But `amount` is `abs(new_supply - prev_supply)`.
-                # We'll just calculate it based on supply diffs if we need to. For now let's set volume = len(trades)
-                
+                # Volume = net token supply change in this interval
+                # (abs diff between opening and closing supply reflects tokens traded)
+                volume = abs(int(trades[-1].supply) - int(trades[0].supply))
+                if volume == 0:
+                    volume = len(trades)  # fallback: count transactions
+
                 # Check if a candle already exists (to be idempotent)
                 existing_stmt = select(Candle5m).where(
                     Candle5m.creator_id == creator_id,
                     Candle5m.open_time == target_interval_start
                 )
                 existing = (await db.execute(existing_stmt)).scalars().first()
-                
+
                 if existing:
                     # Update it just in case
                     existing.close_price = close_price
                     existing.high_price = max(existing.high_price, high_price)
                     existing.low_price = min(existing.low_price, low_price)
-                    existing.volume_tokens += len(trades)
+                    existing.volume_tokens += volume
                 else:
                     new_candle = Candle5m(
                         creator_id=creator_id,
@@ -82,7 +79,7 @@ async def aggregate_5m_candles():
                         high_price=high_price,
                         low_price=low_price,
                         close_price=close_price,
-                        volume_tokens=len(trades)
+                        volume_tokens=volume
                     )
                     db.add(new_candle)
                     
